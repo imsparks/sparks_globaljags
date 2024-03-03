@@ -35,7 +35,7 @@
     </div>
     
     <!--- Add the API key for your Google Map -->
-    <script defer type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=REPLACE_WITH_YOUR_KEY&callback=initMap"></script>
+    <script defer type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD5JhloU-BjHV3CREuUlqWKfHMyxWiyTu4&callback=initMap"></script>
 
     <!--- Add the JavaScript that connects to Firebase & Firestore -->
     <script type="module">
@@ -46,15 +46,24 @@
       import { getFirestore, doc, query, collection, onSnapshot } from  'https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js';
 
       // Paste your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyD5JhloU-BjHV3CREuUlqWKfHMyxWiyTu4",
+        authDomain: "sp24-41200-sparks-globaljags.firebaseapp.com",
+        projectId: "sp24-41200-sparks-globaljags",
+        storageBucket: "sp24-41200-sparks-globaljags.appspot.com",
+        messagingSenderId: "257335408651",
+        appId: "1:257335408651:web:edd869804c7c09cb0fef0e"
+      };
 
       // Initialize Firebase
-
+      console.log('Firebase initialized!');
+      const fbapp = initializeApp(firebaseConfig);
       // Access the Firestore database 
-
+      const db = getFirestore(fbapp);
       // Create a query that selects all documents in the "photos" collection
-
+      const photoQuery = query(collection(db, "photos"))
       // Create an array that will hold all the markers on the map
-
+      let markersArray = [];
       // Create a listener function that watches a snapshot based on a query
       const listener = onSnapshot(photoQuery, (querySnapshot) => {
 
@@ -62,25 +71,41 @@
         const bounds = new google.maps.LatLngBounds();
 
         // Clear existing markers from the map
-
+        markersArray.forEach((marker) => {
+          console.log('Deleting marker');
+          marker.setMap(null);
+        });
         // Check to see if there are any photos in the snapshot;
         // If not, center the map on IUPUI
-
+        if (querySnapshot.empty){
+          const iupui = new google.maps.LatLng(39.774, -86.179);
+          bounds.extend(iupui);
+        };
         // Loop through the documents found in the snapshot
         querySnapshot.forEach((doc) => {
-
+          const photoLat = doc.data().latitude;
+          const photoLon = doc.data().longitude;
           // Create a new LatLng object with the photo’s lat/lon
-
+          const photoLatLng = {lat: photoLat, lng: photoLon};
           // Extend the map bounds to encompass this point
-
+          const newLocation = new google.maps.LatLng(photoLat, photoLon);
+          bouds.extend(newLocation);
           // Place the marker on the map using the thumbnail as the icon
-
+          const marker = new google.maps.marker({
+            position: photoLatLng,
+            map,
+            icon: doc.data().thumbURL
+          });
           // Add the new marker to the array of markers
-
+          markersArray.push(marker)
         });
           
         // When all of the markers have been added to the map, move and recenter
-
+        map.fitbounds(bounds);
+        map.panToBounds(bounds);
+        if (map.zoom > 15){
+          map.setZoom(15);
+        }
       });
     </script>
     
